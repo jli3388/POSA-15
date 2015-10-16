@@ -2,6 +2,7 @@ package edu.vandy.model;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -15,8 +16,8 @@ public class PalantiriManager {
     /**
      * Debugging tag used by the Android logger.
      */
-    protected final static String TAG = 
-        PalantiriManager.class.getSimpleName();
+    protected final static String TAG =
+            PalantiriManager.class.getSimpleName();
 
     /**
      * A counting Semaphore that limits concurrent access to the fixed
@@ -41,6 +42,11 @@ public class PalantiriManager {
         // use a "fair" implementation that mediates concurrent access
         // to the given number of Palantiri.
         // TODO -- you fill in here.
+        mPalantiriMap = new HashMap<>(palantiri.size());
+        for (Palantir palantir : palantiri) {
+            mPalantiriMap.put(palantir, Boolean.TRUE);
+        }
+        this.mAvailablePalantiri = new Semaphore(palantiri.size(), true);
     }
 
     /**
@@ -55,8 +61,17 @@ public class PalantiriManager {
         // this key with "false" to indicate the Palantir isn't
         // available and then return that palantir to the client.
         // TODO -- you fill in here.
-
-        return null; 
+        this.mAvailablePalantiri.acquireUninterruptibly();
+        synchronized (this.mPalantiriMap) {
+            for (Map.Entry<Palantir, Boolean> palantirBooleanEntry : this.mPalantiriMap.entrySet()) {
+                if (!palantirBooleanEntry.getValue()) {
+                    continue;
+                }
+                palantirBooleanEntry.setValue(Boolean.FALSE);
+                return palantirBooleanEntry.getKey();
+            }
+        }
+        return null;
     }
 
     /**
@@ -68,6 +83,10 @@ public class PalantiriManager {
         // in a thread-safe manner and release the Semaphore if all
         // works properly.
         // TODO -- you fill in here.
+        synchronized (this.mPalantiriMap) {
+            this.mPalantiriMap.put(palantir, Boolean.TRUE);
+        }
+        this.mAvailablePalantiri.release();
     }
 
     /*
