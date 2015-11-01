@@ -80,3 +80,8 @@ proguard/
 # Temp files for KDE and other Editor's 
 *~
 
+.DS_Store
+.idea/
+out/
+*.iml
+
