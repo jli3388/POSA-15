@@ -1,10 +1,16 @@
 package vandy.mooc.model;
 
-import java.lang.ref.WeakReference;
-
-import vandy.mooc.MVP;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.util.Log;
+import vandy.mooc.MVP;
+
+import java.io.*;
+import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * This class plays the "Model" role in the Model-View-Presenter (MVP)
@@ -13,12 +19,12 @@ import android.net.Uri;
  * It implements the MVP.ProvidedModelOps so it can be created/managed
  * by the GenericPresenter framework.
  */
-public class ImageDownloadsModel 
+public class ImageDownloadsModel
        implements MVP.ProvidedModelOps {
     /**
      * Debugging tag used by the Android logger.
      */
-    protected final static String TAG = 
+    protected final static String TAG =
         ImageDownloadsModel.class.getSimpleName();
 
     /**
@@ -32,7 +38,7 @@ public class ImageDownloadsModel
      * created.  One time initialization code goes here, e.g., storing
      * a WeakReference to the Presenter and initializing the sync and
      * async Services.
-     * 
+     *
      * @param presenter
      *            A reference to the Presenter layer.
      */
@@ -62,12 +68,12 @@ public class ImageDownloadsModel
      *
      * @param context
      *          The context in which to write the file.
-     * @param url 
+     * @param url
      *          The URL of the image to download.
-     * @param directoryPathname 
+     * @param directoryPathname
      *          Pathname of the directory to write the file.
-     * 
-     * @return 
+     *
+     * @return
      *        Absolute path to the downloaded image file on the file
      *        system.
      */
@@ -75,6 +81,38 @@ public class ImageDownloadsModel
                              Uri url,
                              Uri directoryPathname) {
         // @@ TODO -- You fill in here, replacing "null" with the appropriate code.
-    	return null;
+        InputStream inS = null;
+        OutputStream outS = null;
+        Bitmap bitmap = null;
+        try {
+            Log.d(TAG, String.format("downloadImage( context, %s, %s ) begin.", url.toString(), directoryPathname.toString()));
+            inS = (InputStream) new URL(url.toString()).getContent();
+            bitmap = BitmapFactory.decodeStream(inS);
+            final File targetDir = new File(directoryPathname.getPath());
+            if (!targetDir.exists()) {
+                targetDir.mkdir();
+            }
+            final File tmpImgFile = File.createTempFile("tmpImg", null, targetDir);
+            outS = new FileOutputStream(tmpImgFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outS);
+            Log.d(TAG, String.format("downloadImage returning [%s]", tmpImgFile.toString()));
+            return Uri.fromFile(tmpImgFile);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                inS.close();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            try {
+                outS.close();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }
+        return null;
     }
 }

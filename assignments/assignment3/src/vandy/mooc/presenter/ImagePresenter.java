@@ -1,19 +1,21 @@
 package vandy.mooc.presenter;
 
-import java.io.File;
-import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-
+import android.content.Context;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Environment;
+import android.util.Log;
 import vandy.mooc.MVP;
+import vandy.mooc.common.BitmapUtils;
 import vandy.mooc.common.GenericPresenter;
 import vandy.mooc.common.Utils;
 import vandy.mooc.model.ImageDownloadsModel;
-import android.content.Context;
-import android.net.Uri;
-import android.os.Environment;
-import android.util.Log;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class defines all the image-related operations.  It implements
@@ -49,7 +51,7 @@ public class ImagePresenter
      * Stores the directory to be used for all downloaded images.
      */
     private Uri mDirectoryPathname = null;
-    
+
     /**
      * Array of Strings that represent the valid URLs that have
      * been entered.
@@ -178,7 +180,7 @@ public class ImagePresenter
     public void startProcessing() {
         if (mUrlList.isEmpty())
             Utils.showToast(mView.get().getActivityContext(),
-                            "no images provided");
+                    "no images provided");
         else {
             // Make the progress bar visible.
             mView.get().displayProgressBar();
@@ -197,6 +199,11 @@ public class ImagePresenter
             // executeOnExecutor().
 
             // TODO -- you fill in here.
+            for (final Uri srcUrl : mUrlList) {
+                final ImageDownloadAndProcessUnit unit = new ImageDownloadAndProcessUnit(this, srcUrl, this.mDirectoryPathname);
+                final ImageDownloadAsync imageDownloadAsync = new ImageDownloadAsync();
+                imageDownloadAsync.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, unit);
+            }
         }
     }
 
